@@ -289,10 +289,26 @@ export function BocoSuperAdminDashboard() {
       password: "",
     });
 
+  const sugerirUsernameDesdeNombre = (nombreCompleto: string): string => {
+    const limpio = nombreCompleto
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z\s]/g, " ")
+      .trim();
+    if (!limpio) return "";
+    const partes = limpio.split(/\s+/).filter(Boolean);
+    if (partes.length === 1) return partes[0];
+    if (partes.length === 2) return `${partes[0][0]}${partes[1]}`;
+    if (partes.length === 3) return `${partes[0][0]}${partes[1]}`;
+    // 4 o más palabras (2 nombres + 2 apellidos): inicial del 1er nombre + penúltima palabra (1er apellido)
+    return `${partes[0][0]}${partes[partes.length - 2]}`;
+  };
+
   const sugerirCodigo = async (sedeId: string) => {
     if (!sedeId) return;
     const codigo = await siguienteCodigoRRHH(sedeId);
-    setFormUsuario((f) => (f ? { ...f, codigo_rrhh: codigo, username: f.username || codigo.toLowerCase() } : f));
+    setFormUsuario((f) => (f ? { ...f, codigo_rrhh: codigo } : f));
   };
 
   const guardarUsuario = async () => {
@@ -335,6 +351,7 @@ export function BocoSuperAdminDashboard() {
         toast({ title: "Usuario creado", description: `${f.nombre_completo} (${ROLES_ETIQUETA[f.rol]}).` });
       } else if (f.id) {
         const res = await actualizarUsuarioBoco(user.id, f.id, {
+          username: f.username,
           codigo_rrhh: f.codigo_rrhh,
           nombre_completo: f.nombre_completo,
           email: f.email,
@@ -1064,7 +1081,21 @@ export function BocoSuperAdminDashboard() {
                   <label className={labelCls}>Nombre completo</label>
                   <Input
                     value={formUsuario.nombre_completo}
-                    onChange={(e) => setFormUsuario({ ...formUsuario, nombre_completo: e.target.value })}
+                    onChange={(e) => {
+                      const nuevoNombre = e.target.value;
+                      setFormUsuario((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              nombre_completo: nuevoNombre,
+                              username:
+                                prev.modo === "crear"
+                                  ? sugerirUsernameDesdeNombre(nuevoNombre)
+                                  : prev.username,
+                            }
+                          : prev
+                      );
+                    }}
                     className="text-xs rounded-xl"
                   />
                 </div>
@@ -1129,13 +1160,29 @@ export function BocoSuperAdminDashboard() {
                   </div>
                   <div>
                     <label className={labelCls}>Usuario (login)</label>
-                    <Input
-                      value={formUsuario.username}
-                      onChange={(e) => setFormUsuario({ ...formUsuario, username: e.target.value })}
-                      disabled={formUsuario.modo === "editar"}
-                      placeholder="Ej. szm-023"
-                      className="text-xs rounded-xl font-mono"
-                    />
+                    <div className="flex gap-1.5">
+                      <Input
+                        value={formUsuario.username}
+                        onChange={(e) => setFormUsuario({ ...formUsuario, username: e.target.value.toLowerCase() })}
+                        placeholder="Ej. dlima"
+                        className="text-xs rounded-xl font-mono"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl h-9 px-2"
+                        disabled={!formUsuario.nombre_completo.trim()}
+                        onClick={() =>
+                          setFormUsuario((f) =>
+                            f ? { ...f, username: sugerirUsernameDesdeNombre(f.nombre_completo) } : f
+                          )
+                        }
+                        title="Generar usuario a partir del nombre (ej. dlima)"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 

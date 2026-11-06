@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
@@ -1884,6 +1884,7 @@ export async function actualizarSedeBoco(
 }
 
 export interface CamposUsuarioEditables {
+  username?: string;
   codigo_rrhh?: string;
   nombre_completo?: string;
   telefono?: string;
@@ -1907,6 +1908,9 @@ export async function actualizarUsuarioBoco(
     const solicitante = await exigirAlcanceUsuario(solicitanteId, usuarioId);
     const cambios: Record<string, any> = { updated_at: new Date().toISOString() };
 
+    if (campos.username !== undefined && campos.username.trim()) {
+      cambios.username = campos.username.trim().toLowerCase();
+    }
     if (campos.codigo_rrhh !== undefined) cambios.codigo_rrhh = campos.codigo_rrhh.trim() || null;
     if (campos.nombre_completo !== undefined) {
       if (!campos.nombre_completo.trim()) throw new Error('El nombre no puede quedar vacío.');

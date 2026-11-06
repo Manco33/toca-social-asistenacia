@@ -452,7 +452,7 @@ export function BocoLogin() {
             {temaKiosco.slug === "boco" ? "BOCO Marcaje" : `${temaKiosco.nombre} · Marcaje`}
           </CardTitle>
           <CardDescription className="text-xs text-slate-500 mt-1">
-            Control de asistencia con biometría facial. Ingresa tu ID de RRHH o usuario.
+            Control de asistencia con biometría facial. Ingresa tu usuario y contraseña.
           </CardDescription>
         </CardHeader>
       )}
@@ -468,15 +468,15 @@ export function BocoLogin() {
                 <div className="h-7 w-7 rounded-lg bg-blue-50 text-brand-primary flex items-center justify-center flex-shrink-0">
                   <Lock className="h-4 w-4" />
                 </div>
-                <span><strong>Paso 1:</strong> Ingresa tu ID de RRHH o usuario y tu clave.</span>
+                <span><strong>Paso 1:</strong> Ingresa tu usuario y tu contraseña.</span>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                  ID de RRHH, Usuario o Correo
+                  Usuario
                 </label>
                 <Input
-                  placeholder="Ej. SZM-001, superadmin o szm-001"
+                  placeholder="Ej. dlima, sperez, aprod"
                   value={identificador}
                   onChange={(e) => setIdentificador(e.target.value)}
                   className="h-11 rounded-xl border-slate-300 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 font-medium text-sm bg-white"

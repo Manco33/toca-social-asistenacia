@@ -1,0 +1,278 @@
+═══════════════════════════════════════════════════════════════════════════════
+                   ✅ ARCHIVOS SQL GENERADOS - RESUMEN FINAL
+═══════════════════════════════════════════════════════════════════════════════
+
+¡LISTO! Se han generado TODOS los archivos necesarios para actualizar tu base 
+de datos.
+
+UBICACIÓN: c:\Users\derek\Downloads\aktiva-marcaje-main\scripts\
+
+
+📋 ARCHIVOS NUEVOS CREADOS:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. ⭐ SQL_CODIGO.txt (ESTO ES LO QUE NECESITAS COPIAR)
+   
+   Contiene:
+   • Código SQL para tabla empleados (DPI + celular)
+   • Código SQL para tabla proyectos (ID personalizado)
+   • Instrucciones de cómo ejecutar
+   • Ejemplos de datos
+   • Cómo ejecutar en Supabase
+   • Cómo ejecutar en línea de comando
+
+   👉 EMPIEZA AQUÍ si solo quieres el código SQL
+
+
+2. 📘 MIGRATION_GUIDE.sql (SQL COMPLETO EN UN ARCHIVO)
+   
+   Contiene:
+   • TODO el código SQL necesario
+   • Comentarios explicativos
+   • Múltiples opciones para cada cambio
+   • Verificaciones incluidas
+   • Ejemplos de uso
+
+   👉 Copia COMPLETO este archivo y pégalo en Supabase SQL Editor
+
+
+3. 📖 DATABASE_MIGRATION_GUIDE.md (GUÍA DETALLADA)
+   
+   Contiene:
+   • Instrucciones paso a paso
+   • Múltiples opciones
+   • Solución de problemas
+   • Checklist final
+   • Ejemplos de uso
+
+   👉 Lee esto si quieres entender TODO en detalle
+
+
+4. 📄 README_MIGRACION.txt (RESUMEN RÁPIDO)
+   
+   Contiene:
+   • Resumen de cambios
+   • Pasos para ejecutar
+   • Verificaciones rápidas
+   • Solución de problemas comunes
+
+   👉 Lee esto para entender rápidamente
+
+
+5. 📝 INDICE_ARCHIVOS.txt (ESTE ARCHIVO)
+   
+   Contiene:
+   • Descripción de todos los archivos
+   • Cómo usar cada uno
+   • Ejemplos visuales
+   • Próximos pasos
+
+   👉 Para navegar entre archivos
+
+
+6. 🔧 Otros archivos auxiliares:
+   • migrate-add-dpi-celular.sql (solo empleados)
+   • migrate-add-custom-project-id.sql (solo proyectos)
+   • MIGRATION_README.sh (referencia visual)
+
+
+¿CUÁL DEBO USAR?
+═══════════════════════════════════════════════════════════════════════════════
+
+OPCIÓN 1: "Solo dame el código" (2 minutos)
+  → Abre: SQL_CODIGO.txt
+  → Copia el SQL que necesites
+  → Pégalo en Supabase SQL Editor
+  → Click en Execute
+
+OPCIÓN 2: "Quiero todo paso a paso" (10 minutos)
+  → Lee: README_MIGRACION.txt
+  → Abre: MIGRATION_GUIDE.sql
+  → Copia TODO
+  → Pégalo en Supabase SQL Editor
+  → Click en Execute
+
+OPCIÓN 3: "Quiero entender TODO" (30 minutos)
+  → Lee: DATABASE_MIGRATION_GUIDE.md (COMPLETO)
+  → Luego sigue OPCIÓN 2
+
+
+PASOS RÁPIDOS (EMPIEZA AQUÍ):
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Abre este archivo:
+   → scripts/SQL_CODIGO.txt
+
+2. Copia este bloque (PARA EMPLEADOS):
+   
+   ALTER TABLE empleados
+   ADD COLUMN dpi VARCHAR(255) UNIQUE,
+   ADD COLUMN numero_celular VARCHAR(20);
+   
+   CREATE INDEX idx_empleados_dpi ON empleados(dpi);
+
+3. Ve a Supabase (https://app.supabase.com/)
+
+4. Haz click en: SQL Editor
+
+5. Pega el código
+
+6. Haz click en el botón "Execute" (play)
+
+7. Repite los pasos 1-6 con el código de PROYECTOS
+
+
+¿QUÉ HACE CADA CAMBIO?
+═══════════════════════════════════════════════════════════════════════════════
+
+EMPLEADOS:
+  • Agrega campo: dpi (para documento de identidad)
+  • Agrega campo: numero_celular (para teléfono)
+  • Crea índice en DPI para búsquedas rápidas
+
+PROYECTOS:
+  • Cambia ID de número (1,2,3...) a texto ("PROY-001", "CLI-2024", etc.)
+  • Permite IDs descriptivos y personalizados
+  • Mantiene todos los datos actuales
+
+
+EJEMPLOS RÁPIDOS:
+═══════════════════════════════════════════════════════════════════════════════
+
+Después de ejecutar los cambios:
+
+Crear empleado con DPI:
+  Nombre: Juan Pérez
+  Usuario: juan@empresa.com
+  DPI: 1234567-90
+  Celular: +502 7123 4567
+
+Crear proyecto con ID personalizado:
+  ID: PROY-2024-001
+  Nombre: Renovación Casa
+  Horas: 200
+
+
+VERIFICACIÓN (Ejecuta después):
+═══════════════════════════════════════════════════════════════════════════════
+
+Para verificar que todo funcionó:
+
+```sql
+-- Ver si DPI existe en empleados
+SELECT COUNT(*) FROM empleados WHERE dpi IS NOT NULL;
+
+-- Ver tabla proyectos
+SELECT * FROM proyectos LIMIT 1;
+
+-- Ver estructura de empleados
+DESCRIBE empleados;
+
+-- Ver estructura de proyectos
+DESCRIBE proyectos;
+```
+
+
+CÓDIGO SQL MÍNIMO (Copia y pega):
+═══════════════════════════════════════════════════════════════════════════════
+
+PARA EMPLEADOS:
+
+ALTER TABLE empleados
+ADD COLUMN dpi VARCHAR(255) UNIQUE,
+ADD COLUMN numero_celular VARCHAR(20);
+
+CREATE INDEX idx_empleados_dpi ON empleados(dpi);
+
+
+PARA PROYECTOS (Opción A - Recomendada):
+
+CREATE TABLE proyectos_backup AS SELECT * FROM proyectos;
+
+DROP TABLE proyectos;
+
+CREATE TABLE proyectos (
+  id VARCHAR(50) PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL UNIQUE,
+  ubicacion_del_proyecto VARCHAR(255),
+  soluciones VARCHAR(255),
+  horas_totales DECIMAL(10,2),
+  horas_usadas_manual DECIMAL(10,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_nombre (nombre)
+);
+
+INSERT INTO proyectos SELECT CAST(id AS CHAR), nombre, ubicacion_del_proyecto, soluciones, horas_totales, horas_usadas_manual, created_at, updated_at FROM proyectos_backup;
+
+DROP TABLE proyectos_backup;
+
+
+DÓNDE ENCONTRAR MÁS INFORMACIÓN:
+═══════════════════════════════════════════════════════════════════════════════
+
+Si quieres:
+  • Entender qué hace cada línea → DATABASE_MIGRATION_GUIDE.md
+  • Ver otras opciones → MIGRATION_GUIDE.sql
+  • Solucionar problemas → DATABASE_MIGRATION_GUIDE.md (Solución de Problemas)
+  • Resumen rápido → README_MIGRACION.txt
+
+
+CAMBIOS EN LA APLICACIÓN (YA COMPLETADOS):
+═══════════════════════════════════════════════════════════════════════════════
+
+Estos cambios YA están hechos en el código:
+
+✅ Frontend:
+   • Tabla de usuarios muestra DPI y celular
+   • Tabla de proyectos muestra ID
+   • Puedes editar DPI y celular
+   • Puedes crear/editar proyecto con ID personalizado
+
+✅ Backend:
+   • API acepta dpi y numero_celular
+   • API acepta id personalizado
+   • Todo está conectado y funcionando
+
+Solo necesitas ejecutar los cambios en la BASE DE DATOS.
+
+
+🎯 PRÓXIMOS PASOS:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. ✅ Lee este archivo (estás aquí)
+2. 📖 Lee: SQL_CODIGO.txt o MIGRATION_GUIDE.sql
+3. 💾 BACKUP de tu base de datos (IMPORTANTE)
+4. 🚀 Ejecuta el SQL en Supabase SQL Editor
+5. ✔️  Verifica que funcionó
+6. 🔄 Reinicia la aplicación (npm run dev)
+7. 🧪 Prueba en la interfaz
+
+
+TROUBLESHOOTING RÁPIDO:
+═══════════════════════════════════════════════════════════════════════════════
+
+"Error en proyectos"
+  → Deshacer: DROP TABLE proyectos; RENAME TABLE proyectos_backup TO proyectos;
+
+"DPI duplicado"
+  → Ver duplicados: SELECT dpi, COUNT(*) FROM empleados GROUP BY dpi HAVING COUNT(*) > 1;
+
+"No puedo ejecutar"
+  → Verifica que tienes permisos de admin en Supabase
+  → Comprueba que estás en la BD correcta
+
+Más problemas: DATABASE_MIGRATION_GUIDE.md
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¡LISTO PARA EMPEZAR!
+
+Próxima acción:
+  1. Abre: scripts/SQL_CODIGO.txt
+  2. Copia el SQL que necesites
+  3. Pégalo en Supabase SQL Editor
+  4. ¡Ejecuta!
+
+═══════════════════════════════════════════════════════════════════════════════

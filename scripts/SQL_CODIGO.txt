@@ -1,0 +1,223 @@
+═══════════════════════════════════════════════════════════════════════════════
+                        CÓDIGO SQL PARA LA BASE DE DATOS
+═══════════════════════════════════════════════════════════════════════════════
+
+TABLA 1: EMPLEADOS
+───────────────────────────────────────────────────────────────────────────────
+
+AGREGAR CAMPOS DPI Y CELULAR:
+
+```sql
+ALTER TABLE empleados
+ADD COLUMN dpi VARCHAR(255) UNIQUE COMMENT 'Documento de Identidad Personal (DPI)',
+ADD COLUMN numero_celular VARCHAR(20) COMMENT 'Número de teléfono celular';
+
+CREATE INDEX idx_empleados_dpi ON empleados(dpi);
+```
+
+¿QUÉ HACE?
+  • dpi: Campo único para documento de identidad, máximo 255 caracteres
+  • numero_celular: Campo para número de teléfono, máximo 20 caracteres
+  • Índice en DPI: Para búsquedas rápidas por documento
+
+EJEMPLOS DE DATOS:
+  • DPI: "1234567-90" o "12345678-90"
+  • Celular: "+502 7123 4567" o "7123 4567" o "7123-4567"
+
+
+TABLA 2: PROYECTOS
+───────────────────────────────────────────────────────────────────────────────
+
+CAMBIAR ID DE NÚMERO A TEXTO:
+
+OPCIÓN A (Recomendada - Crear tabla nueva):
+
+```sql
+-- 1. Guardar backup
+CREATE TABLE proyectos_backup AS SELECT * FROM proyectos;
+
+-- 2. Eliminar tabla antigua
+DROP TABLE proyectos;
+
+-- 3. Crear tabla nueva con ID VARCHAR
+CREATE TABLE proyectos (
+  id VARCHAR(50) PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL UNIQUE,
+  ubicacion_del_proyecto VARCHAR(255),
+  soluciones VARCHAR(255),
+  horas_totales DECIMAL(10,2),
+  horas_usadas_manual DECIMAL(10,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_nombre (nombre)
+);
+
+-- 4. Restaurar datos
+INSERT INTO proyectos (id, nombre, ubicacion_del_proyecto, soluciones, horas_totales, horas_usadas_manual, created_at, updated_at)
+SELECT CAST(id AS CHAR), nombre, ubicacion_del_proyecto, soluciones, horas_totales, horas_usadas_manual, created_at, updated_at
+FROM proyectos_backup;
+
+-- 5. Verificar
+SELECT * FROM proyectos LIMIT 5;
+
+-- 6. Eliminar backup
+DROP TABLE proyectos_backup;
+```
+
+OPCIÓN B (Modificación directa - Si la Opción A no funciona):
+
+```sql
+-- Backup primero
+CREATE TABLE proyectos_backup AS SELECT * FROM proyectos;
+
+-- Intentar modificar
+ALTER TABLE proyectos MODIFY COLUMN id VARCHAR(50) NOT NULL PRIMARY KEY;
+```
+
+¿QUÉ HACE?
+  • Cambia el ID de número (1, 2, 3, etc.) a texto (PROY-001, CLI-2024, etc.)
+  • Permite IDs personalizados y descriptivos
+  • Mantiene todos los datos existentes
+
+EJEMPLOS DE IDS QUE PUEDES USAR:
+  • "1001" - Números como antes
+  • "PROY-001" - Formato descriptivo
+  • "CLI-2024-001" - Con cliente y año
+  • "RENOVACION-CASA" - Nombres descriptivos
+
+
+VERIFICAR QUE TODO FUNCIONÓ:
+───────────────────────────────────────────────────────────────────────────────
+
+```sql
+-- Verificar tabla empleados
+SELECT COLUMN_NAME, DATA_TYPE 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'empleados' 
+AND COLUMN_NAME IN ('dpi', 'numero_celular');
+
+-- Resultado esperado: 2 filas (dpi VARCHAR, numero_celular VARCHAR)
+
+
+-- Verificar tabla proyectos
+SELECT COLUMN_NAME, DATA_TYPE, COLUMN_KEY
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'proyectos' 
+AND COLUMN_NAME = 'id';
+
+-- Resultado esperado: id, varchar, PRI (primary key)
+
+
+-- Contar empleados con DPI
+SELECT COUNT(*) FROM empleados WHERE dpi IS NOT NULL;
+
+-- Contar proyectos
+SELECT COUNT(*) FROM proyectos;
+```
+
+
+CÓMO EJECUTAR EN SUPABASE:
+───────────────────────────────────────────────────────────────────────────────
+
+1. Abre: https://app.supabase.com/
+2. Selecciona tu proyecto
+3. Haz clic en: SQL Editor (lado izquierdo)
+4. Copia UNO DE los siguientes bloques SQL
+5. Pégalo en el editor
+6. Haz clic en el botón "Execute" (ícono de play)
+7. Espera el mensaje "Success"
+
+
+CÓMO EJECUTAR VÍA LÍNEA DE COMANDO:
+───────────────────────────────────────────────────────────────────────────────
+
+Si tienes MySQL instalado:
+
+```bash
+mysql -h host_de_tu_bd -u tu_usuario -p tu_base_de_datos < scripts/MIGRATION_GUIDE.sql
+```
+
+Si tienes PostgreSQL:
+
+```bash
+psql postgres://usuario:contraseña@host/base_de_datos < scripts/MIGRATION_GUIDE.sql
+```
+
+
+DESPUÉS DE EJECUTAR:
+───────────────────────────────────────────────────────────────────────────────
+
+El código de la aplicación YA ESTÁ PREPARADO para:
+
+1. En la sección USUARIOS:
+   ✅ Ver DPI de cada técnico
+   ✅ Ver número de celular
+   ✅ Editar DPI al crear/actualizar usuario
+   ✅ Editar celular al crear/actualizar usuario
+
+2. En la sección PROYECTOS:
+   ✅ Ver ID en la tabla
+   ✅ Crear proyecto con ID personalizado (opcional)
+   ✅ Editar ID de proyecto existente
+   ✅ Buscar por ID
+
+
+EJEMPLOS DE INSERTAR DATOS:
+───────────────────────────────────────────────────────────────────────────────
+
+Actualizar empleado existente con DPI:
+
+```sql
+UPDATE empleados
+SET dpi = '1234567-90', numero_celular = '+502 7123 4567'
+WHERE usuario = 'juan@empresa.com';
+```
+
+
+Crear proyecto con ID personalizado:
+
+```sql
+INSERT INTO proyectos (id, nombre, ubicacion_del_proyecto, soluciones, horas_totales)
+VALUES ('PROY-2024-001', 'Renovación de Casa', 'Ciudad de Guatemala', 'Juan Pérez', 200.00);
+```
+
+
+Crear proyecto con ID numérico (como antes):
+
+```sql
+INSERT INTO proyectos (id, nombre, ubicacion_del_proyecto, soluciones, horas_totales)
+VALUES ('1001', 'Construcción Comercial', 'Zona 10', 'María López', 500.00);
+```
+
+
+EN CASO DE ERROR:
+───────────────────────────────────────────────────────────────────────────────
+
+Si algo sale mal con proyectos, deshacer cambios:
+
+```sql
+DROP TABLE proyectos;
+RENAME TABLE proyectos_backup TO proyectos;
+```
+
+
+ORDEN RECOMENDADO DE EJECUCIÓN:
+───────────────────────────────────────────────────────────────────────────────
+
+1. ✅ Ejecutar cambios en empleados (DPI + celular)
+2. ✅ Verificar que empleados está correcto
+3. ✅ Ejecutar cambios en proyectos (ID VARCHAR)
+4. ✅ Verificar que proyectos está correcto
+5. ✅ Reiniciar aplicación (npm run dev)
+6. ✅ Probar en la interfaz
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¿PREGUNTAS?
+
+• Revisa: DATABASE_MIGRATION_GUIDE.md (guía completa)
+• Revisa: MIGRATION_GUIDE.sql (código comentado)
+• Revisa: README_MIGRACION.txt (resumen en texto)
+
+═══════════════════════════════════════════════════════════════════════════════

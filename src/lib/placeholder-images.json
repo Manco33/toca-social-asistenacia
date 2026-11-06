@@ -1,0 +1,22 @@
+{
+  "placeholderImages": [
+    {
+      "id": "admin-avatar",
+      "description": "Administrator avatar",
+      "imageUrl": "https://picsum.photos/seed/101/100/100",
+      "imageHint": "professional person"
+    },
+    {
+      "id": "tech-avatar",
+      "description": "Technician avatar",
+      "imageUrl": "https://picsum.photos/seed/102/100/100",
+      "imageHint": "worker helmet"
+    },
+    {
+      "id": "tech-avatar-2",
+      "description": "Technician avatar 2",
+      "imageUrl": "https://picsum.photos/seed/103/100/100",
+      "imageHint": "person construction"
+    }
+  ]
+}

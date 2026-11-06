@@ -1,0 +1,118 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    POSTGRESQL - CÓDIGO SIMPLE (COPIA Y PEGA)
+═══════════════════════════════════════════════════════════════════════════════
+
+
+📌 PARA EMPLEADOS (DPI EDITABLE + CELULAR):
+═══════════════════════════════════════════════════════════════════════════════
+
+Copia TODO este bloque y pégalo en Supabase SQL Editor:
+
+────────────────────────────────────────────────────────────────────────────
+ALTER TABLE empleados
+ADD COLUMN IF NOT EXISTS dpi VARCHAR(13) UNIQUE NOT NULL DEFAULT '',
+ADD COLUMN IF NOT EXISTS numero_celular VARCHAR(20);
+
+CREATE INDEX IF NOT EXISTS idx_empleados_dpi ON empleados(dpi);
+
+ALTER TABLE empleados
+ADD CONSTRAINT check_dpi_format CHECK (dpi = '' OR (dpi ~ '^[0-9]{1,13}$'));
+────────────────────────────────────────────────────────────────────────────
+
+Luego haz click en "Execute"
+
+
+¿QUÉ HACE?
+  • dpi: Campo único de hasta 13 cifras (solo números)
+  • numero_celular: Campo para teléfono (opcional)
+  • ID: Se mantiene intacto, NO se edita
+  • El DPI es editable y apunta al empleado
+
+
+📌 PARA PROYECTOS (ID EDITABLE):
+═══════════════════════════════════════════════════════════════════════════════
+
+Copia TODO este bloque y pégalo en Supabase SQL Editor:
+
+────────────────────────────────────────────────────────────────────────────
+ALTER TABLE proyectos ALTER COLUMN id DROP DEFAULT;
+────────────────────────────────────────────────────────────────────────────
+
+Luego haz click en "Execute"
+
+
+✅ VERIFICAR QUE FUNCIONÓ:
+═══════════════════════════════════════════════════════════════════════════════
+
+Ejecuta esto en SQL Editor:
+
+────────────────────────────────────────────────────────────────────────────
+-- Ver si se agregó DPI
+SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'empleados' AND COLUMN_NAME IN ('dpi', 'numero_celular');
+
+-- Ver estructura de DPI
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'empleados' AND COLUMN_NAME = 'dpi';
+
+-- Ver si ID está intacto
+SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'empleados' AND COLUMN_NAME = 'id';
+────────────────────────────────────────────────────────────────────────────
+
+Deberías ver:
+  • dpi existe (VARCHAR 13)
+  • numero_celular existe (VARCHAR 20)
+  • id se mantiene igual
+
+
+🧪 PROBAR FUNCIONALIDAD:
+═══════════════════════════════════════════════════════════════════════════════
+
+AGREGAR DPI A UN EMPLEADO:
+
+────────────────────────────────────────────────────────────────────────────
+UPDATE empleados
+SET dpi = '1234567890123', numero_celular = '+502 7123 4567'
+WHERE id = 1;
+────────────────────────────────────────────────────────────────────────────
+
+
+BUSCAR EMPLEADO POR DPI:
+
+────────────────────────────────────────────────────────────────────────────
+SELECT id, nombre, usuario, dpi, numero_celular
+FROM empleados
+WHERE dpi = '1234567890123';
+────────────────────────────────────────────────────────────────────────────
+
+
+CAMBIAR DPI DE UN EMPLEADO:
+
+────────────────────────────────────────────────────────────────────────────
+UPDATE empleados
+SET dpi = '9876543210987'
+WHERE id = 1;
+────────────────────────────────────────────────────────────────────────────
+
+
+VER TODOS LOS EMPLEADOS CON DPI:
+
+────────────────────────────────────────────────────────────────────────────
+SELECT id, nombre, usuario, dpi, numero_celular, rol
+FROM empleados
+WHERE dpi != ''
+ORDER BY id;
+────────────────────────────────────────────────────────────────────────────
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¡LISTO! Ya puedes:
+  ✅ Usar el ID original (no se toca)
+  ✅ Editar el DPI (hasta 13 cifras)
+  ✅ Buscar empleado por DPI
+  ✅ Agregar número de celular
+
+═══════════════════════════════════════════════════════════════════════════════

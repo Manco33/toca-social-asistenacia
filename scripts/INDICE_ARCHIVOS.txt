@@ -1,0 +1,265 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║                      📦 ARCHIVOS GENERADOS PARA LA BASE DE DATOS             ║
+║                                                                               ║
+║                Actualización: DPI + Celular | IDs Personalizados             ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+
+📁 UBICACIÓN DE ARCHIVOS:
+═══════════════════════════════════════════════════════════════════════════════
+
+Todos los archivos están en: /scripts/
+
+
+📋 ARCHIVOS PRINCIPALES (Lee en este orden):
+═══════════════════════════════════════════════════════════════════════════════
+
+1. 📄 README_MIGRACION.txt ⭐ EMPIEZA AQUÍ
+   ├─ Resumen rápido de cambios
+   ├─ Pasos para ejecutar
+   ├─ Verificaciones rápidas
+   └─ Solución de problemas comunes
+
+2. 📄 SQL_CODIGO.txt
+   ├─ Código SQL listo para copiar/pegar
+   ├─ Explicación de qué hace cada parte
+   ├─ Ejemplos de datos
+   └─ Instrucciones por tipo de BD
+
+3. 📄 MIGRATION_GUIDE.sql
+   ├─ SQL COMPLETO (todo en un archivo)
+   ├─ Comentarios detallados
+   ├─ Múltiples opciones
+   ├─ Verificaciones incluidas
+   └─ Ejemplos de uso
+
+4. 📘 DATABASE_MIGRATION_GUIDE.md
+   ├─ Guía completa en Markdown
+   ├─ Instrucciones paso a paso
+   ├─ Troubleshooting detallado
+   ├─ Checklist final
+   └─ Para consulta posterior
+
+
+📄 ARCHIVOS AUXILIARES (Para referencia):
+═══════════════════════════════════════════════════════════════════════════════
+
+• migrate-add-dpi-celular.sql
+  → Solo cambios a tabla empleados
+  → Úsalo si solo quieres DPI/celular
+
+• migrate-add-custom-project-id.sql
+  → Solo cambios a tabla proyectos
+  → Úsalo si solo quieres IDs personalizados
+
+• MIGRATION_README.sh
+  → Script bash con instrucciones
+  → Referencia visual
+
+
+🚀 CÓMO EMPEZAR (3 PASOS):
+═══════════════════════════════════════════════════════════════════════════════
+
+PASO 1: Leer instrucciones (5 minutos)
+  → Abre: README_MIGRACION.txt
+  → O: SQL_CODIGO.txt
+
+PASO 2: Hacer BACKUP (IMPORTANTE)
+  → En Supabase: https://app.supabase.com/ → Project Settings → Backups
+  → O tu administrador de BD
+
+PASO 3: Ejecutar SQL (2 minutos)
+  → Opción A: Supabase SQL Editor → copiar/pegar SQL → Execute
+  → Opción B: Línea de comando → mysql -u usuario < MIGRATION_GUIDE.sql
+
+
+🎯 ¿QUÉ CAMBIOS INCLUYEN?
+═══════════════════════════════════════════════════════════════════════════════
+
+TABLA: empleados
+  ✅ Agregar campo: dpi (VARCHAR 255, UNIQUE)
+  ✅ Agregar campo: numero_celular (VARCHAR 20)
+  ✅ Crear índice en DPI para búsquedas
+
+TABLA: proyectos  
+  ✅ Cambiar ID de BIGINT a VARCHAR(50)
+  ✅ Permite: "PROY-001", "CLI-2024", "1001", etc.
+  ✅ Mantiene todos los datos existentes
+
+
+💻 CÓDIGO PARA EJECUTAR:
+═══════════════════════════════════════════════════════════════════════════════
+
+EMPLEADOS (Agregar DPI y celular):
+
+```sql
+ALTER TABLE empleados
+ADD COLUMN dpi VARCHAR(255) UNIQUE,
+ADD COLUMN numero_celular VARCHAR(20);
+
+CREATE INDEX idx_empleados_dpi ON empleados(dpi);
+```
+
+PROYECTOS (Cambiar ID a VARCHAR):
+
+```sql
+-- Opción 1: Crear tabla nueva (Recomendada)
+CREATE TABLE proyectos_backup AS SELECT * FROM proyectos;
+DROP TABLE proyectos;
+
+CREATE TABLE proyectos (
+  id VARCHAR(50) PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL UNIQUE,
+  ubicacion_del_proyecto VARCHAR(255),
+  soluciones VARCHAR(255),
+  horas_totales DECIMAL(10,2),
+  horas_usadas_manual DECIMAL(10,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_nombre (nombre)
+);
+
+INSERT INTO proyectos SELECT CAST(id AS CHAR), nombre, ubicacion_del_proyecto, soluciones, horas_totales, horas_usadas_manual, created_at, updated_at FROM proyectos_backup;
+DROP TABLE proyectos_backup;
+```
+
+⚠️ Más opciones en: MIGRATION_GUIDE.sql
+
+
+✅ DESPUÉS DE EJECUTAR:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Verifica que los cambios funcionaron
+   → Ejecuta:
+   ```sql
+   SELECT COUNT(*) FROM empleados WHERE dpi IS NOT NULL;
+   SELECT * FROM proyectos LIMIT 1;
+   ```
+
+2. Reinicia la aplicación
+   → npm run dev
+
+3. Prueba en la interfaz
+   → Crea/edita usuario con DPI
+   → Crea/edita proyecto con ID personalizado
+
+
+🔍 VERIFICAR ANTES DE EJECUTAR:
+═══════════════════════════════════════════════════════════════════════════════
+
+□ Hice backup de la BD
+□ Estoy en ambiente dev/test (no producción)
+□ Tengo acceso de admin a la BD
+□ Leí las instrucciones en README_MIGRACION.txt
+□ Entiendo qué hace cada cambio
+
+
+📞 APOYO:
+═══════════════════════════════════════════════════════════════════════════════
+
+Si tienes dudas:
+
+1. Lee los archivos en este orden:
+   README_MIGRACION.txt → SQL_CODIGO.txt → MIGRATION_GUIDE.sql
+
+2. Busca tu problema en:
+   DATABASE_MIGRATION_GUIDE.md (sección "Solución de Problemas")
+
+3. Si todo falla:
+   Restaura desde el backup que hiciste
+
+4. Logs en Supabase:
+   Dashboard → Project Settings → Logs → Database
+
+
+📈 CAMBIOS EN LA APLICACIÓN (Ya completados):
+═══════════════════════════════════════════════════════════════════════════════
+
+Frontend (UI):
+  ✅ src/components/admin-users.tsx
+     • Tabla muestra DPI y celular
+     • Modal permite editar DPI y celular
+  
+  ✅ src/components/admin-projects.tsx
+     • Tabla muestra ID del proyecto
+     • Modal permite editar ID
+     • Crear proyecto con ID personalizado
+
+Backend (API):
+  ✅ src/app/api/admin/users/route.ts
+     • POST/PUT aceptan dpi y numero_celular
+  
+  ✅ src/app/api/projects/route.ts
+     • POST/PUT aceptan id personalizado
+     • Maneja cambios de ID
+
+
+🎓 EJEMPLOS DE USO:
+═══════════════════════════════════════════════════════════════════════════════
+
+Crear empleado con DPI (vía app):
+  • Nombre: Juan Pérez
+  • Usuario: juan@empresa.com
+  • DPI: 1234567-90
+  • Celular: +502 7123 4567
+
+Crear proyecto con ID (vía app):
+  • ID: PROY-2024-001
+  • Nombre: Renovación de Casa
+  • Ubicación: Zona 10
+  • Horas: 200
+
+
+🛠️ ARCHIVOS DE CONFIGURACIÓN:
+═══════════════════════════════════════════════════════════════════════════════
+
+• /scripts/ (ubicación de todos los archivos)
+• /src/components/admin-users.tsx (interfaz usuarios)
+• /src/components/admin-projects.tsx (interfaz proyectos)
+• /src/app/api/admin/users/route.ts (API usuarios)
+• /src/app/api/projects/route.ts (API proyectos)
+
+
+✨ RESUMEN VISUAL:
+═══════════════════════════════════════════════════════════════════════════════
+
+ANTES:
+┌──────────────────────────────────────────────────────────┐
+│ Empleados:                                               │
+│ • id, nombre, usuario, rol, contraseña                   │
+│ ❌ Sin DPI                                               │
+│ ❌ Sin celular                                           │
+│                                                          │
+│ Proyectos:                                               │
+│ • id (BIGINT): 1, 2, 3, 4, 5...                          │
+│ • nombre, ubicacion, horas_totales...                    │
+└──────────────────────────────────────────────────────────┘
+
+DESPUÉS:
+┌──────────────────────────────────────────────────────────┐
+│ Empleados:                                               │
+│ • id, nombre, usuario, rol, contraseña                   │
+│ ✅ dpi (VARCHAR 255, UNIQUE)                             │
+│ ✅ numero_celular (VARCHAR 20)                           │
+│                                                          │
+│ Proyectos:                                               │
+│ • id (VARCHAR 50): "PROY-001", "CLI-2024", "1001"...    │
+│ • nombre, ubicacion, horas_totales...                    │
+└──────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¿LISTO? 
+
+1. Lee: README_MIGRACION.txt
+2. Haz: Backup de BD
+3. Copia: SQL de MIGRATION_GUIDE.sql
+4. Ejecuta: En SQL Editor de Supabase
+5. Prueba: En la aplicación
+
+¡Éxito! 🚀
+
+═══════════════════════════════════════════════════════════════════════════════

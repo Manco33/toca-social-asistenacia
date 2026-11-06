@@ -1,0 +1,265 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    POSTGRESQL - CÓDIGO PARA EJECUTAR
+═══════════════════════════════════════════════════════════════════════════════
+
+Tu BD usa PostgreSQL (Supabase), aquí está el código correcto.
+
+
+📋 TABLA 1: EMPLEADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJETIVO: 
+  ✅ Agregar columna DPI (hasta 13 cifras, editable)
+  ✅ Agregar columna celular
+  ✅ El ID se mantiene intacto (no se edita)
+  ✅ DPI apunta al empleado (UNIQUE)
+
+
+CÓDIGO POSTGRESQL:
+
+```sql
+-- Agregar columnas DPI (hasta 13 cifras) y celular a empleados
+ALTER TABLE empleados
+ADD COLUMN IF NOT EXISTS dpi VARCHAR(13) UNIQUE NOT NULL DEFAULT '',
+ADD COLUMN IF NOT EXISTS numero_celular VARCHAR(20);
+
+-- Crear índice en DPI para búsquedas rápidas
+CREATE INDEX IF NOT EXISTS idx_empleados_dpi ON empleados(dpi);
+
+-- Crear restricción para validar que DPI sea solo números (máximo 13 cifras)
+ALTER TABLE empleados
+ADD CONSTRAINT check_dpi_format CHECK (dpi = '' OR (dpi ~ '^[0-9]{1,13}$'));
+```
+
+¿QUÉ HACE?
+  • dpi: Campo unique de máximo 13 cifras (solo números)
+  • numero_celular: Campo para teléfono (puede ser NULL)
+  • ID: Se mantiene igual (no se toca)
+  • DPI: Es el identificador editable que apunta al empleado
+
+
+CÓMO USAR DESPUÉS:
+
+```sql
+-- Actualizar empleado con DPI y celular
+UPDATE empleados
+SET 
+  dpi = '1234567890123',
+  numero_celular = '+502 7123 4567'
+WHERE id = 1;
+
+-- Buscar empleado por DPI
+SELECT id, nombre, usuario, dpi, numero_celular
+FROM empleados
+WHERE dpi = '1234567890123';
+
+-- Editar el DPI (cambiar a uno diferente)
+UPDATE empleados
+SET dpi = '9876543210987'
+WHERE id = 1;
+
+-- Ver empleados con DPI
+SELECT id, nombre, usuario, dpi, numero_celular
+FROM empleados
+WHERE dpi != ''
+ORDER BY id;
+```
+
+
+📋 TABLA 2: PROYECTOS
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJETIVO:
+  ✅ Hacer el ID editable
+
+
+CÓDIGO POSTGRESQL:
+
+```sql
+-- Hacer el ID editable: eliminar auto-increment
+ALTER TABLE proyectos ALTER COLUMN id DROP DEFAULT;
+```
+
+
+CÓMO USAR DESPUÉS:
+
+```sql
+-- Editar el ID de un proyecto
+UPDATE proyectos
+SET id = 1001
+WHERE id = 16;
+
+-- Crear proyecto con ID específico
+INSERT INTO proyectos (id, nombre, ubicacion_del_proyecto, soluciones, horas_totales)
+VALUES (2001, 'Mi Proyecto', 'Ubicación', 'Contacto', 100);
+
+-- Ver proyectos
+SELECT id, nombre, ubicacion_del_proyecto, horas_totales
+FROM proyectos
+LIMIT 10;
+```
+
+
+🚀 PASOS RÁPIDOS PARA EJECUTAR:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Ve a: https://app.supabase.com/
+
+2. Selecciona tu proyecto
+
+3. SQL Editor
+
+4. Copia y ejecuta PRIMERO (EMPLEADOS):
+
+   ────────────────────────────────────────────────────────────────────────
+   ALTER TABLE empleados
+   ADD COLUMN IF NOT EXISTS dpi VARCHAR(13) UNIQUE NOT NULL DEFAULT '',
+   ADD COLUMN IF NOT EXISTS numero_celular VARCHAR(20);
+   
+   CREATE INDEX IF NOT EXISTS idx_empleados_dpi ON empleados(dpi);
+   
+   ALTER TABLE empleados
+   ADD CONSTRAINT check_dpi_format CHECK (dpi = '' OR (dpi ~ '^[0-9]{1,13}$'));
+   ────────────────────────────────────────────────────────────────────────
+
+5. Espera "Success"
+
+6. Copia y ejecuta LUEGO (PROYECTOS):
+
+   ────────────────────────────────────────────────────────────────────────
+   ALTER TABLE proyectos ALTER COLUMN id DROP DEFAULT;
+   ────────────────────────────────────────────────────────────────────────
+
+7. Espera "Success"
+
+8. ✅ ¡LISTO! Ya puedes editar DPI y usar la nueva estructura
+
+
+✅ VERIFICACIÓN:
+═══════════════════════════════════════════════════════════════════════════════
+
+Después de ejecutar, verifica con:
+
+```sql
+-- Ver si DPI se agregó correctamente
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE 
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'empleados' AND COLUMN_NAME IN ('dpi', 'numero_celular');
+
+-- Deberías ver:
+-- dpi | character varying | NO (porque NO NULL)
+-- numero_celular | character varying | YES
+
+-- Ver si ID está intacto
+SELECT COLUMN_NAME, DATA_TYPE 
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'empleados' AND COLUMN_NAME = 'id';
+
+-- Ver si ID es editable en proyectos
+SELECT COLUMN_NAME, COLUMN_DEFAULT 
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'proyectos' AND COLUMN_NAME = 'id';
+```
+
+
+📝 EJEMPLO PRÁCTICO:
+═══════════════════════════════════════════════════════════════════════════════
+
+Después de ejecutar el código:
+
+1. Agregar DPI a un empleado existente:
+
+   UPDATE empleados
+   SET dpi = '1234567890123', numero_celular = '+502 7123 4567'
+   WHERE id = 1;
+
+2. Buscar empleado por DPI:
+
+   SELECT * FROM empleados WHERE dpi = '1234567890123';
+
+3. Cambiar DPI de un empleado:
+
+   UPDATE empleados
+   SET dpi = '9876543210987'
+   WHERE id = 1;
+
+4. Cambiar ID de un proyecto:
+
+   UPDATE proyectos
+   SET id = 2000
+   WHERE id = 16;
+
+5. Crear proyecto con ID específico:
+
+   INSERT INTO proyectos (id, nombre, ubicacion_del_proyecto, soluciones)
+   VALUES (500, 'Mi Proyecto', 'Zona 10', 'Contacto');
+
+
+⚠️  IMPORTANTE:
+═══════════════════════════════════════════════════════════════════════════════
+
+✓ El ID de empleados se mantiene intacto (no se toca)
+✓ El DPI es el identificador nuevo (hasta 13 cifras)
+✓ El DPI es UNIQUE (no puede haber dos iguales)
+✓ El DPI es editable desde el formulario
+✓ Haz BACKUP antes de ejecutar
+✓ Ejecuta primero empleados, luego proyectos
+
+
+🔍 SI ALGO FALLA:
+═══════════════════════════════════════════════════════════════════════════════
+
+Error: "column already exists"
+  → Las columnas ya existen. Eso está bien, el código usa IF NOT EXISTS.
+
+Error: "duplicate key value"
+  → Hay dos empleados con el mismo DPI. Verifica los datos.
+
+Error: "cannot drop default"
+  → El ID no tiene auto-increment. Ignora ese comando.
+
+Error: "constraint violation"
+  → El DPI tiene más de 13 cifras o caracteres no numéricos. Valida.
+
+
+CÓDIGO COMBINADO (TODO EN UNO):
+═══════════════════════════════════════════════════════════════════════════════
+
+Si quieres ejecutar TODO de una vez:
+
+```sql
+-- EMPLEADOS: Agregar DPI y celular
+ALTER TABLE empleados
+ADD COLUMN IF NOT EXISTS dpi VARCHAR(13) UNIQUE NOT NULL DEFAULT '',
+ADD COLUMN IF NOT EXISTS numero_celular VARCHAR(20);
+
+CREATE INDEX IF NOT EXISTS idx_empleados_dpi ON empleados(dpi);
+
+ALTER TABLE empleados
+ADD CONSTRAINT check_dpi_format CHECK (dpi = '' OR (dpi ~ '^[0-9]{1,13}$'));
+
+-- PROYECTOS: Hacer ID editable
+ALTER TABLE proyectos ALTER COLUMN id DROP DEFAULT;
+
+-- VERIFICAR CAMBIOS
+SELECT 'empleados' as tabla, column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'empleados'
+AND column_name IN ('id', 'dpi', 'numero_celular')
+UNION ALL
+SELECT 'proyectos', column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'proyectos'
+AND column_name = 'id';
+```
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¿Necesitas ayuda con algo más?
+
+• Si tienes dudas: postgresql-empleados-editable.sql
+• Si hay restricciones: Revisa POSTGRESQL_SIMPLE.txt
+• Si hay errores: Ejecuta las verificaciones incluidas
+
+═══════════════════════════════════════════════════════════════════════════════

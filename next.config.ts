@@ -24,7 +24,12 @@ const nextConfig: NextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
-    if (!isServer) {
+    if (isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@vladmandic/face-api': false,
+      };
+    } else {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,

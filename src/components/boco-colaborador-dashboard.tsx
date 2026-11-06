@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,7 +40,6 @@ import {
   Award,
   AlertTriangle,
 } from "lucide-react";
-import * as faceapi from "@vladmandic/face-api";
 import type { HorarioTurno, LMSCurso, LMSAvanceColaborador, LMSRespuestaColaborador } from "@/lib/types";
 import { BocoLogo } from "@/components/boco-brand";
 
@@ -257,6 +256,7 @@ export function BocoColaboradorDashboard() {
   // Enrolar rostro del colaborador
   const iniciarCamaraEnrolamiento = async () => {
     try {
+      const faceapi = await import("@vladmandic/face-api");
       const MODEL_URL = "/models";
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
       await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
@@ -283,6 +283,7 @@ export function BocoColaboradorDashboard() {
     if (!videoRef.current || !user) return;
     setEnrolando(true);
     try {
+      const faceapi = await import("@vladmandic/face-api");
       const deteccion = await faceapi
         .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 }))
         .withFaceLandmarks()

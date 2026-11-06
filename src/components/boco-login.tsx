@@ -26,7 +26,6 @@ import {
   Globe2,
   Tablet,
 } from "lucide-react";
-import * as faceapi from "@vladmandic/face-api";
 import type { UsuarioBoco } from "@/lib/types";
 import Image from "next/image";
 import {
@@ -80,11 +79,12 @@ export function BocoLogin() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Cargar modelos de face-api
+  // Cargar modelos de face-api (solo en cliente)
   const cargarModelosFaceApi = async () => {
     if (modelosCargados) return;
     try {
       setFacialLoading(true);
+      const faceapi = await import("@vladmandic/face-api");
       const MODEL_URL = "/models";
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
       await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
@@ -204,6 +204,7 @@ export function BocoLogin() {
     setFacialLoading(true);
 
     try {
+      const faceapi = await import("@vladmandic/face-api");
       const deteccion = await faceapi
         .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 }))
         .withFaceLandmarks()

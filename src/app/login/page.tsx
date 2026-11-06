@@ -1,6 +1,8 @@
 import { BocoLogin } from '@/components/boco-login';
 import { InstallPrompt } from '@/components/install-prompt';
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-brand-dark via-brand-dark-hover to-brand-dark p-4 sm:p-8">

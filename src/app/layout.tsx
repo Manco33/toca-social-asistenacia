@@ -6,6 +6,8 @@ import { BrandThemeSync } from "@/components/brand-theme-sync";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "BOCO - Control de Asistencia, Horarios y Capacitación",
   description: "Plataforma integral de gestión de turnos, marcaje biométrico y aprendizaje para colaboradores de BOCO.",

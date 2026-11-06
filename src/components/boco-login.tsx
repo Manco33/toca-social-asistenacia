@@ -158,8 +158,16 @@ export function BocoLogin() {
 
     setLoading(true);
     try {
-      const res = await loginBoco(identificador, password);
-      if (res.success && res.user) {
+      let res = await loginBoco(identificador, password).catch(() => undefined);
+      if (!res || typeof res.success !== "boolean") {
+        const apiRes = await fetch("/api/boco/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identificador, password }),
+        });
+        res = await apiRes.json();
+      }
+      if (res?.success && res.user) {
         // Si es superadmin, puede entrar directo al Centro de Control Nacional
         if (res.user.rol === "superadmin") {
           login(res.user);
@@ -183,7 +191,7 @@ export function BocoLogin() {
       } else {
         toast({
           title: "Acceso denegado",
-          description: res.error || "Usuario o contraseña incorrectos.",
+          description: res?.error || "Usuario o contraseña incorrectos.",
           variant: "destructive",
         });
       }

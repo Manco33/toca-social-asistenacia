@@ -148,7 +148,7 @@ export function BocoAsignadorDashboard() {
 
   // Formulario Asignación 1 a 1 Individual
   const [colabSeleccionadoId, setColabSeleccionadoId] = useState("");
-  const [fechaTurno, setFechaTurno] = useState(new Date().toISOString().slice(0, 10));
+  const [fechaTurno, setFechaTurno] = useState(() => formatearFechaIso(new Date()));
   const [horaEntrada, setHoraEntrada] = useState("08:00");
   const [horaSalida, setHoraSalida] = useState("17:00");
   const [esFestivo, setEsFestivo] = useState(false);
@@ -156,7 +156,7 @@ export function BocoAsignadorDashboard() {
 
   // Formulario Justificación y Reposición de Horas
   const [justColabId, setJustColabId] = useState("");
-  const [justFecha, setJustFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [justFecha, setJustFecha] = useState(() => formatearFechaIso(new Date()));
   const [justTipo, setJustTipo] = useState<"falta" | "llegada_tarde" | "salida_temprana">("falta");
   const [justMotivo, setJustMotivo] = useState("");
   const [justHorasReponer, setJustHorasReponer] = useState(8);

@@ -141,6 +141,13 @@ export function BocoColaboradorDashboard() {
     }
   };
 
+  const formatearFechaLocalIso = (d: Date): string => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const [turnosColab, setTurnosColab] = useState<any[]>([]);
 
   const cargarHorarioSemanaColab = async () => {
@@ -153,8 +160,8 @@ export function BocoColaboradorDashboard() {
       lunes.setDate(diff);
       const domingo = new Date(lunes);
       domingo.setDate(domingo.getDate() + 6);
-      const fechaIni = lunes.toISOString().slice(0, 10);
-      const fechaFin = domingo.toISOString().slice(0, 10);
+      const fechaIni = formatearFechaLocalIso(lunes);
+      const fechaFin = formatearFechaLocalIso(domingo);
 
       const turnos = await obtenerTurnosSemana(fechaIni, fechaFin);
       const misTurnos = turnos.filter((t) => t.usuario_id === user.id);
@@ -801,7 +808,7 @@ export function BocoColaboradorDashboard() {
                   const diff = hoy.getDate() - dia + (dia === 0 ? -6 : 1);
                   const f = new Date(hoy);
                   f.setDate(diff + i);
-                  const fechaIso = f.toISOString().slice(0, 10);
+                  const fechaIso = formatearFechaLocalIso(f);
                   const nombres = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
                   const diaNombre = nombres[i];
                   const displayFecha = `${f.getDate()}/${f.getMonth() + 1}`;

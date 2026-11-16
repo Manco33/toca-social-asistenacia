@@ -23,6 +23,20 @@ import { validarGeocercaSede } from '@/lib/geofencing';
 import { generarEvaluacionPorIA } from '@/lib/lms-ai-service';
 import { enviarNotificacionWhatsApp } from '@/lib/whatsapp';
 
+const ZONA_HORARIA_BOCO = 'America/Guatemala';
+
+function fechaEnGuatemala(date: Date = new Date()): Date {
+  return new Date(date.toLocaleString('en-US', { timeZone: ZONA_HORARIA_BOCO }));
+}
+
+function hoyGuatemalaStr(): string {
+  const d = fechaEnGuatemala();
+  const anio = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
+
 // ==============================================================================
 // 1. AUTENTICACIÓN BOCO
 // ==============================================================================
@@ -226,7 +240,7 @@ export async function registrarMarcajeBoco(params: {
   fotoUrl?: string;
 }): Promise<{ success: boolean; error?: string; distanciaMetros?: number; toleranciaMetros?: number }> {
   try {
-    const hoyStr = new Date().toISOString().slice(0, 10);
+    const hoyStr = hoyGuatemalaStr();
     const ahoraIso = new Date().toISOString();
 
     // 1. Obtener la sede asignada al usuario
@@ -377,7 +391,7 @@ export async function obtenerMarcajeHoyColaborador(
   usuarioId: string
 ): Promise<{ success: boolean; marcaje?: MarcajeAsistencia | null; error?: string }> {
   try {
-    const hoyStr = new Date().toISOString().slice(0, 10);
+    const hoyStr = hoyGuatemalaStr();
     const { data, error } = await supabase
       .from('marcajes_asistencia')
       .select('*')
@@ -420,11 +434,8 @@ export async function obtenerMonitoreoHoyEquipo(usuarioIds: string[]): Promise<{
       return { success: true, monitoreo: [] };
     }
 
-    const ahora = new Date();
-    const anio = ahora.getFullYear();
-    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
-    const dia = String(ahora.getDate()).padStart(2, '0');
-    const hoyStr = `${anio}-${mes}-${dia}`;
+    const ahora = fechaEnGuatemala();
+    const hoyStr = hoyGuatemalaStr();
     const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
 
     // 1. Obtener turnos de hoy para los miembros del equipo
@@ -457,7 +468,7 @@ export async function obtenerMonitoreoHoyEquipo(usuarioIds: string[]): Promise<{
         mensajeEstado = turno.notas || 'Día libre programado (OFF)';
       } else if (marcaje?.hora_salida) {
         estado = 'finalizado';
-        mensajeEstado = `Jornada finalizada (Salida: ${new Date(marcaje.hora_salida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+        mensajeEstado = `Jornada finalizada (Salida: ${new Date(marcaje.hora_salida).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit', timeZone: ZONA_HORARIA_BOCO })})`;
       } else if (marcaje?.hora_inicio_almuerzo && !marcaje?.hora_fin_almuerzo) {
         estado = 'en_almuerzo';
         mensajeEstado = 'En periodo de almuerzo';
@@ -465,7 +476,7 @@ export async function obtenerMonitoreoHoyEquipo(usuarioIds: string[]): Promise<{
         if (turno?.hora_entrada) {
           const [hProg, mProg] = turno.hora_entrada.split(':').map(Number);
           const minProg = hProg * 60 + mProg;
-          const fechaEntrada = new Date(marcaje.hora_entrada);
+          const fechaEntrada = fechaEnGuatemala(new Date(marcaje.hora_entrada));
           const minEntrada = fechaEntrada.getHours() * 60 + fechaEntrada.getMinutes();
           const diff = minEntrada - minProg;
           const tolerancia = turno.tolerancia_minutos ?? 15;

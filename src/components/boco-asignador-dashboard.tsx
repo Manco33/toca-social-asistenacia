@@ -26,6 +26,7 @@ import {
   Clock,
   MessageCircle,
   FileText,
+  FileDown,
   Scale,
   PlusCircle,
   Loader2,
@@ -434,6 +435,136 @@ Recuerda que en BOCO las horas extras no se pagan monetariamente, se nivelan con
     setLunesSemana(nuevoLunes);
   };
 
+  const handleExportarMatrizPDF = () => {
+    if (team.length === 0) {
+      toast({
+        title: "Sin datos para exportar",
+        description: "No hay colaboradores en tu equipo para generar el PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const esc = (v: unknown) =>
+      String(v ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    const rangoTexto = `${diasSemana[0].display} al ${diasSemana[6].display}`;
+    const sedeTexto = user?.sede?.nombre || "BOCO";
+    const liderTexto = user?.nombre_completo || "Asignador";
+
+    const filasHtml = team
+      .map((colab) => {
+        let totalHoras = 0;
+        const celdas = diasSemana
+          .map((d) => {
+            const key = `${colab.id}_${d.fecha}`;
+            const t = matrizTurnos[key];
+            if (!t) {
+              return `<td class="cell empty">—</td>`;
+            }
+            if (t.es_dia_descanso) {
+              const nota = t.notas?.trim() || "OFF / Descanso";
+              return `<td class="cell off"><div class="off-title">OFF</div><div class="note">${esc(nota)}</div></td>`;
+            }
+            const horas = calcularHorasTurno(t.hora_entrada, t.hora_salida, false);
+            totalHoras += horas;
+            const notaHtml = t.notas?.trim() ? `<div class="badge">${esc(t.notas)}</div>` : "";
+            return `<td class="cell work"><div class="time">${esc(t.hora_entrada.slice(0, 5))} - ${esc(
+              t.hora_salida.slice(0, 5)
+            )}</div><div class="hrs">${horas}h</div>${notaHtml}</td>`;
+          })
+          .join("");
+
+        return `
+          <tr>
+            <td class="colab">
+              <div class="colab-name">${esc(colab.nombre_completo)}</div>
+              <div class="colab-role">${esc(colab.puesto?.nombre || "Colaborador")}</div>
+            </td>
+            ${celdas}
+            <td class="total">${Number(totalHoras.toFixed(1))}h</td>
+          </tr>`;
+      })
+      .join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Horarios ${esc(sedeTexto)} - ${esc(rangoTexto)}</title>
+  <style>
+    @page { size: letter landscape; margin: 10mm; }
+    * { box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; }
+    body { margin: 0; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #0f172a; padding-bottom: 8px; }
+    .header h1 { margin: 0; font-size: 16px; font-weight: 800; }
+    .header p { margin: 2px 0 0; font-size: 11px; color: #475569; }
+    .meta { text-align: right; font-size: 10px; color: #475569; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 10px; }
+    th, td { border: 1px solid #cbd5e1; padding: 5px 4px; text-align: center; vertical-align: middle; }
+    th { background: #0f172a; color: #ffffff; font-weight: 700; font-size: 10px; }
+    th.col-name { width: 16%; text-align: left; padding-left: 8px; }
+    th.col-total { width: 7%; background: #1e293b; color: #fbbf24; }
+    td.colab { text-align: left; padding-left: 8px; background: #f8fafc; }
+    .colab-name { font-weight: 700; font-size: 10px; color: #0f172a; }
+    .colab-role { font-size: 9px; color: #64748b; margin-top: 1px; }
+    td.off { background: #0f172a; color: #ffffff; }
+    .off-title { font-weight: 800; font-size: 10px; letter-spacing: 0.5px; }
+    .note { font-size: 8px; color: #fde047; margin-top: 2px; }
+    .time { font-weight: 700; font-size: 10px; color: #0f172a; }
+    .hrs { font-size: 9px; font-weight: 700; color: #0284c7; margin-top: 1px; }
+    .badge { display: inline-block; margin-top: 2px; padding: 1px 4px; border-radius: 4px; background: #fef08a; color: #713f12; font-size: 8px; font-weight: 700; }
+    td.empty { color: #94a3b8; }
+    td.total { font-weight: 800; font-size: 11px; background: #f1f5f9; color: #0f172a; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Matriz Semanal de Horarios · ${esc(sedeTexto)}</h1>
+      <p>Semana: ${esc(rangoTexto)} · Líder Asignador: ${esc(liderTexto)}</p>
+    </div>
+    <div class="meta">
+      <div>Total colaboradores: ${team.length}</div>
+      <div>Generado: ${esc(new Date().toLocaleDateString("es-GT"))}</div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-name">Colaborador</th>
+        ${diasSemana.map((d) => `<th>${esc(d.nombre)}<br/><span style="font-weight:400;font-size:9px">${esc(d.display)}</span></th>`).join("")}
+        <th class="col-total">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${filasHtml}
+    </tbody>
+  </table>
+  <script>
+    window.onload = function () { setTimeout(function () { window.print(); }, 250); };
+  </script>
+</body>
+</html>`;
+
+    const win = window.open("", "_blank", "width=1200,height=800");
+    if (!win) {
+      toast({
+        title: "Ventana bloqueada",
+        description: "Permite las ventanas emergentes del navegador para exportar el PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  };
+
   const handleGuardarMatriz = async (notificarWhatsApp: boolean = false) => {
     setGuardandoMatriz(true);
     try {
@@ -715,6 +846,17 @@ Recuerda que en BOCO las horas extras no se pagan monetariamente, se nivelan con
 
               {/* ACCIONES RÁPIDAS DE LA MATRIZ */}
               <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleExportarMatrizPDF}
+                  className="h-8 text-xs bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 hover:text-white rounded-xl"
+                >
+                  <FileDown className="h-3.5 w-3.5 mr-1 text-emerald-400" />
+                  Exportar PDF
+                </Button>
+
                 <Button
                   type="button"
                   size="sm"

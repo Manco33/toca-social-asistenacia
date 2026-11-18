@@ -75,17 +75,10 @@ function formatearFechaIso(d: Date): string {
   return `${anio}-${mes}-${dia}`;
 }
 
+import { calcularHorasNetasTurno } from "@/lib/time-calculations";
+
 function calcularHorasTurno(entrada: string, salida: string, descanso: boolean): number {
-  if (descanso || !entrada || !salida) return 0;
-  try {
-    const [h1, m1] = entrada.split(":").map(Number);
-    const [h2, m2] = salida.split(":").map(Number);
-    let min = (h2 * 60 + m2) - (h1 * 60 + m1);
-    if (min < 0) min += 24 * 60;
-    return Number((min / 60).toFixed(1));
-  } catch {
-    return 0;
-  }
+  return calcularHorasNetasTurno(entrada, salida, descanso);
 }
 
 export function BocoAsignadorDashboard() {

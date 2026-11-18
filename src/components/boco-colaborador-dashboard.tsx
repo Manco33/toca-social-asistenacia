@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import type { HorarioTurno, LMSCurso, LMSAvanceColaborador, LMSRespuestaColaborador } from "@/lib/types";
 import { BocoLogo } from "@/components/boco-brand";
+import { calcularHorasNetasTurno } from "@/lib/time-calculations";
 
 export function BocoColaboradorDashboard() {
   const { user } = useAuth();
@@ -788,14 +789,9 @@ export function BocoColaboradorDashboard() {
                   Total Horas Semanales
                 </span>
                 <span className="text-lg font-extrabold text-amber-400 font-mono">
-                  {turnosColab.reduce((acc, t) => {
-                    if (t.es_dia_descanso || !t.hora_entrada || !t.hora_salida) return acc;
-                    const [h1, m1] = t.hora_entrada.split(":").map(Number);
-                    const [h2, m2] = t.hora_salida.split(":").map(Number);
-                    let min = (h2 * 60 + m2) - (h1 * 60 + m1);
-                    if (min < 0) min += 24 * 60;
-                    return acc + min / 60;
-                  }, 0).toFixed(1)}h
+                  {turnosColab
+                    .reduce((acc, t) => acc + calcularHorasNetasTurno(t.hora_entrada, t.hora_salida, t.es_dia_descanso), 0)
+                    .toFixed(1)}h
                 </span>
               </div>
             </CardHeader>

@@ -22,6 +22,7 @@ import type {
 import { validarGeocercaSede } from '@/lib/geofencing';
 import { generarEvaluacionPorIA } from '@/lib/lms-ai-service';
 import { enviarNotificacionWhatsApp } from '@/lib/whatsapp';
+import { calcularHorasNetasTurno } from '@/lib/time-calculations';
 
 const ZONA_HORARIA_BOCO = 'America/Guatemala';
 
@@ -1166,13 +1167,7 @@ export async function obtenerBancoHorasEquipo(
       let festivosLaborados = 0;
 
       for (const t of turnosUsuario) {
-        if (!t.es_dia_descanso && t.hora_entrada && t.hora_salida) {
-          const [h1, m1] = t.hora_entrada.split(':').map(Number);
-          const [h2, m2] = t.hora_salida.split(':').map(Number);
-          let min = h2 * 60 + m2 - (h1 * 60 + m1);
-          if (min < 0) min += 24 * 60;
-          horasProgramadas += min / 60;
-        }
+        horasProgramadas += calcularHorasNetasTurno(t.hora_entrada, t.hora_salida, t.es_dia_descanso);
         if (t.es_dia_festivo && !t.es_dia_descanso) {
           festivosLaborados++;
         }

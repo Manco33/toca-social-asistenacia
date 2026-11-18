@@ -123,3 +123,29 @@ export function calculateTimeStats(logs: any[], extras: any[]): TimeStats {
         projectsById
     };
 }
+
+/**
+ * Calcula las horas netas de un turno descontando el descanso/break:
+ * - Si el turno bruto es de 5 horas o menos (<= 300 min): descuenta 30 minutos.
+ * - Si el turno bruto pasa de 5 horas (> 300 min): descuenta 1 hora (60 minutos).
+ */
+export function calcularHorasNetasTurno(
+    entrada?: string | null,
+    salida?: string | null,
+    descanso?: boolean
+): number {
+    if (descanso || !entrada || !salida) return 0;
+    try {
+        const [h1, m1] = entrada.split(':').map(Number);
+        const [h2, m2] = salida.split(':').map(Number);
+        if (Number.isNaN(h1) || Number.isNaN(m1) || Number.isNaN(h2) || Number.isNaN(m2)) return 0;
+        let minBrutos = h2 * 60 + m2 - (h1 * 60 + m1);
+        if (minBrutos < 0) minBrutos += 24 * 60;
+        if (minBrutos <= 0) return 0;
+        const descansoMin = minBrutos <= 300 ? 30 : 60;
+        const minNetos = Math.max(0, minBrutos - descansoMin);
+        return Number((minNetos / 60).toFixed(2));
+    } catch {
+        return 0;
+    }
+}

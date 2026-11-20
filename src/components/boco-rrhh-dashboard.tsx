@@ -50,6 +50,10 @@ import {
   Award,
   ChevronRight,
   AlertTriangle,
+  Radio,
+  UserCheck,
+  AlertOctagon,
+  Coffee,
 } from "lucide-react";
 import type { UsuarioBoco, SedeZona, DepartamentoPuesto, MarcajeAsistencia } from "@/lib/types";
 import { BocoLogo } from "@/components/boco-brand";
@@ -110,6 +114,8 @@ export function BocoRrhhDashboard() {
   const [filtroCursoId, setFiltroCursoId] = useState<string>("todos");
   const [filtroEstadoLms, setFiltroEstadoLms] = useState<string>("todos");
   const [busquedaLms, setBusquedaLms] = useState<string>("");
+  const [filtroTracker, setFiltroTracker] = useState<string>("todos");
+  const [busquedaTracker, setBusquedaTracker] = useState<string>("");
 
   // RRHH solo administra su propia sucursal (null = sin sucursal asignada: no ve nada)
   const alcanceSedeId = user?.sede_id || null;
@@ -398,10 +404,14 @@ export function BocoRrhhDashboard() {
 
       {/* PESTAÑAS DE ADMINISTRACIÓN (SIN EMOJIS) */}
       <Tabs defaultValue="usuarios" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 max-w-2xl bg-slate-200/80 p-1.5 rounded-2xl gap-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 max-w-3xl bg-slate-200/80 p-1.5 rounded-2xl gap-1">
           <TabsTrigger value="usuarios" className="text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 py-2">
             <Users className="h-3.5 w-3.5 text-brand-primary" />
             Colaboradores
+          </TabsTrigger>
+          <TabsTrigger value="tracker" className="text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 py-2">
+            <Radio className="h-3.5 w-3.5 text-rose-500 animate-pulse" />
+            Tracker en Vivo
           </TabsTrigger>
           <TabsTrigger value="sedes" className="text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 py-2">
             <MapPin className="h-3.5 w-3.5 text-[#F5A623]" />
@@ -426,7 +436,7 @@ export function BocoRrhhDashboard() {
                 En Turno / Puntuales Hoy
               </span>
               <span className="text-2xl font-extrabold text-emerald-600 mt-1 block">
-                {monitoreoHoy.filter((m) => m.estado_vivo === "en_turno_puntual" || m.estado_vivo === "jornada_completada").length}
+                {monitoreoHoy.filter((m) => m.estado === "puntual" || m.estado === "finalizado" || m.estado === "en_almuerzo").length}
               </span>
             </div>
             <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -434,7 +444,7 @@ export function BocoRrhhDashboard() {
                 Con Retardo Hoy
               </span>
               <span className="text-2xl font-extrabold text-amber-600 mt-1 block">
-                {monitoreoHoy.filter((m) => m.estado_vivo === "en_turno_retardo").length}
+                {monitoreoHoy.filter((m) => m.estado === "retardo").length}
               </span>
             </div>
             <div className="bg-white p-4 rounded-2xl border border-rose-200 shadow-sm">
@@ -442,7 +452,7 @@ export function BocoRrhhDashboard() {
                 Sin Marcar (En Rojo)
               </span>
               <span className="text-2xl font-extrabold text-rose-600 mt-1 block">
-                {monitoreoHoy.filter((m) => m.estado_vivo === "ausente_sin_marcar").length}
+                {monitoreoHoy.filter((m) => m.estado === "sin_marcar").length}
               </span>
             </div>
             <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -450,7 +460,7 @@ export function BocoRrhhDashboard() {
                 Descanso / Sin Turno Hoy
               </span>
               <span className="text-2xl font-extrabold text-slate-700 mt-1 block">
-                {monitoreoHoy.filter((m) => m.estado_vivo === "dia_libre" || m.estado_vivo === "sin_turno" || m.estado_vivo === "pendiente_iniciar").length}
+                {monitoreoHoy.filter((m) => m.estado === "descanso" || m.estado === "sin_turno" || m.estado === "turno_proximo").length}
               </span>
             </div>
           </div>
@@ -739,6 +749,301 @@ export function BocoRrhhDashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* 1B. TRACKER DE ASISTENCIA EN VIVO (IGUAL AL ASIGNADOR, PARA TODA LA SUCURSAL) */}
+        <TabsContent value="tracker" className="mt-6 space-y-6">
+          {(() => {
+            const colabsSucursal = usuarios.filter((u) => u.rol === "colaborador");
+            const totalEquipo = colabsSucursal.length;
+            const puntualCount = monitoreoHoy.filter(
+              (m) => m.estado === "puntual" || m.estado === "finalizado" || m.estado === "en_almuerzo"
+            ).length;
+            const retardoCount = monitoreoHoy.filter((m) => m.estado === "retardo").length;
+            const sinMarcarCount = monitoreoHoy.filter((m) => m.estado === "sin_marcar").length;
+            const proximoCount = monitoreoHoy.filter((m) => m.estado === "turno_proximo").length;
+            const descansoCount = monitoreoHoy.filter(
+              (m) => m.estado === "descanso" || m.estado === "sin_turno"
+            ).length;
+
+            const q = busquedaTracker.trim().toLowerCase();
+            const filtrados = colabsSucursal.filter((colab) => {
+              if (
+                q &&
+                !colab.nombre_completo.toLowerCase().includes(q) &&
+                !(colab.puesto?.nombre || "").toLowerCase().includes(q) &&
+                !(colab.username || "").toLowerCase().includes(q)
+              ) {
+                return false;
+              }
+              const info = monitoreoHoy.find((m) => m.usuario_id === colab.id);
+              const est = info?.estado || "sin_turno";
+              if (filtroTracker === "todos") return true;
+              if (filtroTracker === "sin_marcar") return est === "sin_marcar";
+              if (filtroTracker === "retardo") return est === "retardo";
+              if (filtroTracker === "puntual") return est === "puntual" || est === "finalizado" || est === "en_almuerzo";
+              if (filtroTracker === "proximo") return est === "turno_proximo";
+              if (filtroTracker === "descanso") return est === "descanso" || est === "sin_turno";
+              return true;
+            });
+
+            return (
+              <>
+                {/* ENCABEZADO DEL TRACKER EN VIVO */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
+                  <div>
+                    <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                      <Radio className="h-5 w-5 text-rose-500 animate-pulse" />
+                      Tracker de Asistencia en Tiempo Real
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Control de entradas, retardos, salidas y descansos de toda tu sucursal hoy.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2.5 self-end sm:self-auto">
+                    <div className="relative">
+                      <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <Input
+                        value={busquedaTracker}
+                        onChange={(e) => setBusquedaTracker(e.target.value)}
+                        placeholder="Buscar nombre o puesto..."
+                        className="pl-8 h-9 w-48 text-xs rounded-xl border-slate-200"
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={cargarDatos}
+                      disabled={loading}
+                      className="h-9 rounded-xl border-slate-200 text-xs font-semibold hover:bg-slate-50"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${loading ? "animate-spin text-brand-primary" : "text-slate-600"}`} />
+                      Actualizar en Vivo
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 5 KPI CARDS RESUMEN */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div className="flex items-center justify-between text-slate-400 mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Total Sucursal</span>
+                      <Users className="h-4 w-4 text-brand-primary" />
+                    </div>
+                    <div className="text-2xl font-black text-slate-900">{totalEquipo}</div>
+                    <span className="text-[11px] text-slate-500 font-medium">Colaboradores</span>
+                  </div>
+
+                  <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 shadow-sm">
+                    <div className="flex items-center justify-between text-emerald-700 mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">En Sede / Puntuales</span>
+                      <UserCheck className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <div className="text-2xl font-black text-emerald-800">{puntualCount}</div>
+                    <span className="text-[11px] text-emerald-700 font-medium">Marcajes confirmados</span>
+                  </div>
+
+                  <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 shadow-sm">
+                    <div className="flex items-center justify-between text-amber-700 mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Con Retardo</span>
+                      <Clock className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div className="text-2xl font-black text-amber-800">{retardoCount}</div>
+                    <span className="text-[11px] text-amber-700 font-medium">Llegaron fuera de horario</span>
+                  </div>
+
+                  <div className="bg-rose-50/70 p-4 rounded-2xl border border-rose-300 shadow-sm relative overflow-hidden">
+                    {sinMarcarCount > 0 && <div className="absolute top-0 right-0 w-2 h-full bg-rose-500 animate-pulse" />}
+                    <div className="flex items-center justify-between text-rose-700 mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">¡Sin Marcar!</span>
+                      <AlertOctagon className="h-4 w-4 text-rose-600 animate-pulse" />
+                    </div>
+                    <div className="text-2xl font-black text-rose-800">{sinMarcarCount}</div>
+                    <span className="text-[11px] text-rose-700 font-medium">Turno iniciado sin entrada</span>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between text-slate-500 mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Turno Tarde / OFF</span>
+                      <Coffee className="h-4 w-4 text-slate-500" />
+                    </div>
+                    <div className="text-2xl font-black text-slate-800">{proximoCount + descansoCount}</div>
+                    <span className="text-[11px] text-slate-500 font-medium">{proximoCount} prox. / {descansoCount} OFF</span>
+                  </div>
+                </div>
+
+                {/* FILTROS POR SEMÁFORO */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                  <Button
+                    size="sm"
+                    variant={filtroTracker === "todos" ? "default" : "outline"}
+                    onClick={() => setFiltroTracker("todos")}
+                    className={`rounded-xl text-xs h-8 ${filtroTracker === "todos" ? "bg-brand-dark text-white" : "border-slate-200 text-slate-600"}`}
+                  >
+                    Todos ({totalEquipo})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filtroTracker === "sin_marcar" ? "default" : "outline"}
+                    onClick={() => setFiltroTracker("sin_marcar")}
+                    className={`rounded-xl text-xs h-8 ${filtroTracker === "sin_marcar" ? "bg-rose-600 text-white hover:bg-rose-700" : "border-rose-200 text-rose-700 hover:bg-rose-50"}`}
+                  >
+                    <AlertOctagon className="h-3 w-3 mr-1" />
+                    Rojo: Sin Marcar ({sinMarcarCount})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filtroTracker === "retardo" ? "default" : "outline"}
+                    onClick={() => setFiltroTracker("retardo")}
+                    className={`rounded-xl text-xs h-8 ${filtroTracker === "retardo" ? "bg-amber-600 text-white hover:bg-amber-700" : "border-amber-200 text-amber-700 hover:bg-amber-50"}`}
+                  >
+                    <Clock className="h-3 w-3 mr-1" />
+                    Amarillo: Con Retardo ({retardoCount})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filtroTracker === "puntual" ? "default" : "outline"}
+                    onClick={() => setFiltroTracker("puntual")}
+                    className={`rounded-xl text-xs h-8 ${filtroTracker === "puntual" ? "bg-emerald-600 text-white hover:bg-emerald-700" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`}
+                  >
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Verde: Puntuales ({puntualCount})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filtroTracker === "proximo" ? "default" : "outline"}
+                    onClick={() => setFiltroTracker("proximo")}
+                    className={`rounded-xl text-xs h-8 ${filtroTracker === "proximo" ? "bg-slate-700 text-white" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                  >
+                    Turno Próximo ({proximoCount})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filtroTracker === "descanso" ? "default" : "outline"}
+                    onClick={() => setFiltroTracker("descanso")}
+                    className={`rounded-xl text-xs h-8 ${filtroTracker === "descanso" ? "bg-purple-700 text-white" : "border-purple-200 text-purple-700 hover:bg-purple-50"}`}
+                  >
+                    Día OFF / Sin Turno ({descansoCount})
+                  </Button>
+                </div>
+
+                {/* LISTADO DE TARJETAS DEL TRACKER */}
+                {filtrados.length === 0 ? (
+                  <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80">
+                    <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                    <p className="text-sm font-bold text-slate-700">No hay colaboradores en esta categoría</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {filtrados.map((colab) => {
+                      const info = monitoreoHoy.find((m) => m.usuario_id === colab.id);
+                      const estado = info?.estado || "sin_turno";
+                      const esRojo = estado === "sin_marcar";
+                      const esAmarillo = estado === "retardo";
+                      const esVerde = estado === "puntual" || estado === "finalizado" || estado === "en_almuerzo";
+                      const esDescanso = estado === "descanso" || estado === "sin_turno";
+                      const esProximo = estado === "turno_proximo";
+
+                      return (
+                        <Card
+                          key={colab.id}
+                          className={`rounded-3xl transition-all duration-200 overflow-hidden border ${
+                            esRojo
+                              ? "border-rose-300 bg-rose-50/30 shadow-md ring-1 ring-rose-200"
+                              : esAmarillo
+                              ? "border-amber-300 bg-amber-50/20 shadow-sm"
+                              : esVerde
+                              ? "border-emerald-200 bg-white shadow-sm"
+                              : "border-slate-200 bg-white shadow-sm"
+                          }`}
+                        >
+                          <div className="p-5 space-y-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className="h-11 w-11 rounded-2xl bg-brand-dark text-white flex items-center justify-center font-bold text-sm shrink-0">
+                                  {colab.nombre_completo.split(" ").slice(0, 2).map((n) => n[0]).join("")}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-extrabold text-slate-900 text-sm">{colab.nombre_completo}</span>
+                                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-bold border border-slate-200">
+                                      @{colab.username}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-slate-500 mt-0.5">
+                                    {colab.puesto?.nombre || "Colaborador"} • {colab.sede?.nombre || "Sucursal"}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="self-start sm:self-auto shrink-0">
+                                {esRojo && (
+                                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 text-white font-extrabold text-xs animate-pulse">
+                                    <AlertOctagon className="h-4 w-4" />
+                                    <span>ROJO: SIN MARCAR</span>
+                                  </div>
+                                )}
+                                {esAmarillo && (
+                                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 text-white font-extrabold text-xs">
+                                    <Clock className="h-4 w-4" />
+                                    <span>AMARILLO: RETARDO</span>
+                                  </div>
+                                )}
+                                {esVerde && (
+                                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-accent text-brand-dark font-extrabold text-xs">
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    <span>{estado === "finalizado" ? "FINALIZADO" : estado === "en_almuerzo" ? "EN ALMUERZO" : "EN SEDE · PUNTUAL"}</span>
+                                  </div>
+                                )}
+                                {esProximo && (
+                                  <Badge variant="outline" className="text-slate-600 border-slate-300 text-xs">
+                                    Turno Próximo
+                                  </Badge>
+                                )}
+                                {esDescanso && (
+                                  <Badge variant="outline" className="text-purple-700 border-purple-200 bg-purple-50 text-xs">
+                                    {estado === "descanso" ? "Día OFF" : "Sin Turno Hoy"}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/80 p-3 rounded-2xl border border-slate-100 text-xs">
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase block">Turno Programado Hoy</span>
+                                <span className="font-mono font-bold text-slate-800">
+                                  {info?.turnoHoy
+                                    ? info.turnoHoy.es_dia_descanso
+                                      ? info.turnoHoy.notas || "OFF / Descanso"
+                                      : `${info.turnoHoy.hora_entrada?.slice(0, 5)} - ${info.turnoHoy.hora_salida?.slice(0, 5)}`
+                                    : "Sin turno asignado"}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase block">Marcaje de Entrada</span>
+                                <span className="font-mono font-bold text-slate-800">
+                                  {info?.marcajeHoy?.hora_entrada
+                                    ? new Date(info.marcajeHoy.hora_entrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                                    : "—"}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase block">Estado / Salida</span>
+                                <span className="font-semibold text-slate-700">
+                                  {info?.mensajeEstado || "Sin actividad registrada"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </TabsContent>
 
         {/* 2. SEDES Y GEOCERCAS */}
